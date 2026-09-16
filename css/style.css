@@ -581,39 +581,3 @@ h6,
 
 
 
-/* Enhanced Mobile Responsiveness for Header */
-@media (max-width: 991px) {
-    .navbar-brand {
-        max-width: 75%;
-    }
-    .navbar-brand img {
-        max-height: 45px !important;
-        margin-right: 10px !important;
-    }
-    .site-title {
-        font-size: 16px !important;
-        white-space: normal !important;
-        line-height: 1.2 !important;
-    }
-    .site-subtitle {
-        font-size: 10px !important;
-        white-space: normal !important;
-        display: block;
-        line-height: 1.2 !important;
-        margin-top: 2px;
-    }
-    .navbar-toggler {
-        padding: 4px 8px;
-    }
-}
-@media (max-width: 400px) {
-    .site-title {
-        font-size: 14px !important;
-    }
-    .site-subtitle {
-        font-size: 9px !important;
-    }
-    .navbar-brand img {
-        max-height: 35px !important;
-    }
-}
