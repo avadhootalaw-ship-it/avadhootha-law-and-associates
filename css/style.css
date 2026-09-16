@@ -581,3 +581,35 @@ h6,
 
 
 
+
+/* Mobile Navbar Fix */
+@media (max-width: 991px) {
+    .navbar-brand {
+        max-width: calc(100% - 90px);
+        white-space: normal !important;
+        margin-left: 10px !important;
+    }
+    .navbar-brand div {
+        overflow: hidden;
+    }
+    .navbar-brand img {
+        max-height: 40px !important;
+        margin-right: 10px !important;
+    }
+    .site-title {
+        font-size: 15px !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+    .site-subtitle {
+        font-size: 9px !important;
+        white-space: normal !important;
+        display: block;
+        line-height: 1.2 !important;
+        margin-top: 2px;
+    }
+    .navbar-toggler {
+        margin-right: 10px !important;
+        padding: 4px 8px;
+    }
+}
