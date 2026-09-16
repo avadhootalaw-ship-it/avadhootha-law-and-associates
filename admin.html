@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Admin Portal - Avadhootha Law Associates</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet"> 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        .admin-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        #dashboard-section { display: none; }
+        .form-section { display: none; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0">
+        <a href="index.html" class="navbar-brand ms-4 ms-lg-0 d-flex align-items-center">
+            <h1 class="text-primary m-0 site-title">ADMIN PORTAL</h1>
+        </a>
+    </nav>
+
+    <div class="container admin-container">
+        <!-- Simple Login Section -->
+        <div id="login-section">
+            <h3 class="mb-4 text-center">Admin Login</h3>
+            <div id="login-error" class="alert alert-danger d-none"></div>
+            <div class="mb-3">
+                <label>Master Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password...">
+            </div>
+            <button onclick="login()" class="btn btn-primary w-100">Login</button>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Dashboard</h3>
+                <button onclick="logout()" class="btn btn-sm btn-outline-danger">Logout</button>
+            </div>
+            
+            <div id="upload-msg" class="alert alert-success d-none"></div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Select Section to Update:</label>
+                <select id="section-select" class="form-select" onchange="showForm()">
+                    <option value="">-- Choose --</option>
+                                        <option value="gallery">Gallery (Images)</option>
+                    <option value="blog">Blog (Image + Article)</option>
+                    <option value="judgements">Judgements (PDF + Article)</option>
+                    <option disabled>----------</option>
+                    <option value="manage-gallery">Manage Gallery</option>
+                    <option value="manage-blog">Manage Blogs</option>
+                    <option value="manage-judgements">Manage Judgements</option>
+                </select>
+            </div>
+
+            <!-- Gallery Form -->
+            <div id="form-gallery" class="form-section">
+                <div class="mb-3">
+                    <label>Upload Image</label>
+                    <input type="file" id="gal-image" class="form-control" accept="image/*">
+                </div>
+                <div class="mb-3">
+                    <label>Caption (Optional)</label>
+                    <input type="text" id="gal-caption" class="form-control" placeholder="Image description">
+                </div>
+                <button onclick="submitGallery()" class="btn btn-primary w-100" id="btn-gallery">Save to Gallery</button>
+            </div>
+
+            <!-- Blog Form -->
+            <div id="form-blog" class="form-section">
+                <div class="mb-3">
+                    <label>Blog Title</label>
+                    <input type="text" id="blog-title" class="form-control" placeholder="Enter title">
+                </div>
+                <div class="mb-3">
+                    <label>Featured Image</label>
+                    <input type="file" id="blog-image" class="form-control" accept="image/*">
+                </div>
+                <div class="mb-3">
+                    <label>Article Content</label>
+                    <textarea id="blog-content" class="form-control" rows="5" placeholder="Write your article..."></textarea>
+                </div>
+                <button onclick="submitBlog()" class="btn btn-primary w-100" id="btn-blog">Save Blog Post</button>
+            </div>
+
+            <!-- Judgements Form -->
+            <div id="form-judgements" class="form-section">
+                <div class="mb-3">
+                    <label>Judgement Title</label>
+                    <input type="text" id="judg-title" class="form-control" placeholder="e.g. Case ABC vs XYZ">
+                </div>
+                <div class="mb-3">
+                    <label>Upload PDF</label>
+                    <input type="file" id="judg-pdf" class="form-control" accept="application/pdf">
+                </div>
+                <div class="mb-3">
+                    <label>Summary / Details</label>
+                    <textarea id="judg-content" class="form-control" rows="4" placeholder="Brief summary..."></textarea>
+                </div>
+                <button onclick="submitJudgement()" class="btn btn-primary w-100" id="btn-judgements">Save Judgement</button>
+            </div>
+
+            <!-- Manage Gallery -->
+            <div id="form-manage-gallery" class="form-section" style="display: none;">
+                <h5 class="mb-3">Manage Gallery</h5>
+                <div id="manage-gallery-list">Loading...</div>
+            </div>
+
+            <!-- Manage Blog -->
+            <div id="form-manage-blog" class="form-section" style="display: none;">
+                <h5 class="mb-3">Manage Blogs</h5>
+                <div id="manage-blog-list">Loading...</div>
+            </div>
+
+            <!-- Manage Judgements -->
+            <div id="form-manage-judgements" class="form-section" style="display: none;">
+                <h5 class="mb-3">Manage Judgements</h5>
+                <div id="manage-judgements-list">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const SUPABASE_URL = 'https://gkbgklyxwhzdjicgscbj.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_HPAGG2MacyvtURwJL8w6vg_wVGc8iL6';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Simple Hardcoded Login
+        function login() {
+            const password = document.getElementById('password').value;
+            if (password === 'Avadhoota2024') {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('dashboard-section').style.display = 'block';
+                document.getElementById('login-error').classList.add('d-none');
+            } else {
+                const errDiv = document.getElementById('login-error');
+                errDiv.innerText = "Incorrect password!";
+                errDiv.classList.remove('d-none');
+            }
+        }
+
+        function logout() {
+            document.getElementById('password').value = '';
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('dashboard-section').style.display = 'none';
+        }
+
+                        function showForm() {
+            document.querySelectorAll('.form-section').forEach(el => el.style.display = 'none');
+            const val = document.getElementById('section-select').value;
+            if (val) {
+                document.getElementById('form-' + val).style.display = 'block';
+                if (val.startsWith('manage-')) {
+                    loadManageData(val.replace('manage-', ''));
+                }
+            }
+        }
+
+        async function loadManageData(section) {
+            const listDiv = document.getElementById('manage-' + section + '-list');
+            listDiv.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+            
+            let tableName = section;
+            if (section === 'blog') tableName = 'blogs';
+
+            const { data, error } = await supabaseClient.from(tableName).select('*').order('created_at', { ascending: false });
+            
+            if (error) {
+                listDiv.innerHTML = '<p class="text-danger">Error loading data.</p>';
+                return;
+            }
+            if (data.length === 0) {
+                listDiv.innerHTML = '<p class="text-muted">No items found.</p>';
+                return;
+            }
+
+            let html = '<ul class="list-group">';
+            data.forEach(item => {
+                let title = item.title || item.caption || 'Untitled Item';
+                let date = new Date(item.created_at).toLocaleDateString();
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div style="max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <strong>${title}</strong><br>
+                            <small class="text-muted">${date}</small>
+                        </div>
+                        <button class="btn btn-sm btn-danger" onclick="deleteItem('${tableName}', '${item.id}')">
+                            <i class="fa fa-trash"></i> Delete
+                        </button>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            listDiv.innerHTML = html;
+        }
+
+        async function deleteItem(table, id) {
+            if (!confirm("Are you sure you want to completely delete this item? This cannot be undone.")) return;
+            
+            const { error } = await supabaseClient.from(table).delete().eq('id', id);
+            
+            if (error) {
+                alert("Error deleting item: " + error.message);
+            } else {
+                alert("Item deleted successfully!");
+                // Refresh list
+                const val = document.getElementById('section-select').value;
+                if (val.startsWith('manage-')) {
+                    loadManageData(val.replace('manage-', ''));
+                }
+            }
+        }
+
+        function showMessage(msg, isError = false) {
+            const msgDiv = document.getElementById('upload-msg');
+            msgDiv.innerText = msg;
+            msgDiv.className = isError ? 'alert alert-danger' : 'alert alert-success';
+            msgDiv.classList.remove('d-none');
+            setTimeout(() => msgDiv.classList.add('d-none'), 5000);
+        }
+
+        async function uploadFile(file) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = Math.random().toString(36).substring(2) + '_' + Date.now() + '.' + fileExt;
+            
+            const { data, error } = await supabaseClient.storage.from('Media').upload(fileName, file);
+            if (error) throw error;
+            
+            const { data: publicUrlData } = supabaseClient.storage.from('Media').getPublicUrl(fileName);
+            return publicUrlData.publicUrl;
+        }
+
+        async function submitGallery() {
+            try {
+                document.getElementById('btn-gallery').innerText = "Uploading...";
+                const file = document.getElementById('gal-image').files[0];
+                if (!file) throw new Error("Please select an image.");
+                
+                const imageUrl = await uploadFile(file);
+                const caption = document.getElementById('gal-caption').value;
+
+                const { error } = await supabaseClient.from('gallery').insert([{ image_url: imageUrl, caption }]);
+                if (error) throw error;
+
+                showMessage("Image saved to Gallery!");
+                document.getElementById('gal-image').value = '';
+                document.getElementById('gal-caption').value = '';
+            } catch (err) { showMessage(err.message, true); } 
+            finally { document.getElementById('btn-gallery').innerText = "Save to Gallery"; }
+        }
+
+        async function submitBlog() {
+            try {
+                document.getElementById('btn-blog').innerText = "Uploading...";
+                const title = document.getElementById('blog-title').value;
+                const content = document.getElementById('blog-content').value;
+                const file = document.getElementById('blog-image').files[0];
+                
+                if (!title || !content || !file) throw new Error("Please fill all fields.");
+                
+                const imageUrl = await uploadFile(file);
+                const { error } = await supabaseClient.from('blogs').insert([{ title, content, image_url: imageUrl }]);
+                if (error) throw error;
+
+                showMessage("Blog post saved!");
+                document.getElementById('blog-title').value = ''; document.getElementById('blog-content').value = ''; document.getElementById('blog-image').value = '';
+            } catch (err) { showMessage(err.message, true); } 
+            finally { document.getElementById('btn-blog').innerText = "Save Blog Post"; }
+        }
+
+        async function submitJudgement() {
+            try {
+                document.getElementById('btn-judgements').innerText = "Uploading...";
+                const title = document.getElementById('judg-title').value;
+                const description = document.getElementById('judg-content').value;
+                const file = document.getElementById('judg-pdf').files[0];
+                
+                if (!title || !file) throw new Error("Please fill title and select a PDF.");
+                
+                const pdfUrl = await uploadFile(file);
+                const { error } = await supabaseClient.from('judgements').insert([{ title, description, pdf_url: pdfUrl }]);
+                if (error) throw error;
+
+                showMessage("Judgement saved!");
+                document.getElementById('judg-title').value = ''; document.getElementById('judg-content').value = ''; document.getElementById('judg-pdf').value = '';
+            } catch (err) { showMessage(err.message, true); } 
+            finally { document.getElementById('btn-judgements').innerText = "Save Judgement"; }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
