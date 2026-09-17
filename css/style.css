@@ -1,6 +1,6 @@
 /********** Template CSS **********/
 :root {
-    --primary: #E6B800;
+    --primary: #B5914A;
     --light: #F8F8F8;
     --dark: #252525;
 }
@@ -612,4 +612,28 @@ h6,
         margin-right: 10px !important;
         padding: 4px 8px;
     }
+}
+
+/* Font override */
+:root {
+    --bs-font-sans-serif: 'Playfair Display', serif;
+    --bs-body-font-family: 'Playfair Display', serif;
+}
+
+body, p, a, button, input, select, textarea, span {
+    font-family: 'Playfair Display', serif !important;
+    font-weight: 500 !important;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: 'Playfair Display', serif !important;
+    font-weight: 700 !important;
+}
+
+/* Ensure Font Awesome still works */
+.fa, .fas, .far, .fa-solid, .fa-regular {
+    font-family: "Font Awesome 5 Free" !important;
+}
+.fab, .fa-brands {
+    font-family: "Font Awesome 5 Brands" !important;
 }
